@@ -1,0 +1,51 @@
+# [ BLUEPRINT ] //overrides Blueprint header if exists
+Bundle-Blueprint:
+
+# [ OSGI-SERVICES ] //need to fo via blueprint parsing
+Export-Service: com.example.UserService; osgi.service.blueprint.compname=UserService
+Import-Service: com.example.SecurityService;multiple:=false
+
+# [ EXP-IMP ]
+-exportcontents: !*.impl.*, ${packages;ANNOTATED;org.osgi.annotation.versioning.Version}
+Import-Package: *
+
+# [ PERSISTANCE ]
+#Meta-Persistence: META-INF/persistence.xml
+Dynamic-Import-Package: org.hibernate.proxy
+
+# [ WEB(APP) / WAB / WAR ]
+Web-ContextPath: /users
+# //Pax Web support not 100% OSGi 4.2 compliant https://ops4j1.jira.com/browse/PAXWEB-206
+Webapp-Context: /users
+-wab:
+#-includeresource: WEB-INF/classes=src/main/resources
+# //regex for end and start (^\[)|(\]$)
+deps: ${project.sourceSets.main.runtimeClasspath.files}
+# [ !!HERE!! these two does not work ]
+#lastDep: {subst;{last;{deps}};(^\\[)|(\\]\$)}   does not work
+#lastDep: {replace;{last;{deps}};\\];}             does not work
+lastDep: ${substring;${last;${deps}};0;-1}
+-wablib: ${format;%s,;${filter;${deps},${lastDep};.*\.jar$}}
+
+
+
+
+
+# // probably no changes needed
+Bundle-Description: ${project.description}
+Bundle-DocURL: ${project.bundleDocURL}
+Bundle-Version: ${project.version}
+Automatic-Module-Name: ${project.group}.${replace;${bsn};[-_];.}
+
+-snapshot: ${tstamp}-SNAPSHOT
+-pedantic: true
+-sources: false
+-runee: JavaSE-${project.javaManifestVersion}
+Bundle-RequiredExecutionEnvironment: JavaSE-${project.javaManifestVersion}
+Require-Capability: osgi.extender;osgi.extender="aries.jpa", osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=${project.javaManifestVersion}))"
+# TODO: does not work. No Idea why
+-output: ${bsn}_${versionmask;==;${project.version}}.jar
+
+
+
+
